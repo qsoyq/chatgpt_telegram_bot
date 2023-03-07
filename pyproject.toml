@@ -1,0 +1,120 @@
+[tool.poetry]
+name = "bot"
+version = "0.0.1"
+authors = ["wangqs <wqs1639@gmail.com>"]
+description = ""
+
+repository = "repository"
+
+[tool.poetry.build]
+generate-setup-file = false
+
+[tool.poetry.scripts]
+main = "bot.bot:run_bot"
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typer = {version = "^0.6.0",  extras = ["all"]}
+pretty-errors = "^1.2.25"
+ipython = "^8.4"
+python-telegram-bot = {version = "20.1", extras = ["socks"]}
+openai = "^0.27.0"
+PyYAML = "6.0"
+pymongo = "4.3.3"
+python-dotenv = "0.21.0"
+pydantic = "^1.10.5"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^2.20.0"
+pycln = "^2.1.1"
+yapf = "^0.32.0"
+
+isort = "^5.10.1"
+mypy = "^0.971"
+
+tox = "^3.25.1"
+tox-poetry = "^0.4.1"
+
+pytest ="^7.1.3"
+
+pytest-asyncio = "^0.19.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py310
+isolated_build = true
+
+[testenv]
+setenv =
+    PYTHONPATH = .
+deps =
+    poetry
+    pytest
+
+commands =
+    pytest tests
+"""
+
+
+[tool.isort]
+# https://pycqa.github.io/isort/docs/configuration/options.html
+# profile = "hug"
+line_length = 119
+multi_line_output = 3
+balanced_wrapping = true
+use_parentheses = true
+atomic = true
+lines_between_types = 1
+combine_as_imports = true
+
+[tool.yapf]
+# https://github.com/google/yapf#formatting-style
+based_on_style = "google"
+# https://github.com/google/yapf#knobs
+spaces_before_comment = 2
+split_before_logical_operator = true
+ALIGN_CLOSING_BRACKET_WITH_VISUAL_INDENT = true
+allow_multiline_dictionary_keys = true
+coalesce_brackets = true
+dedent_closing_brackets = true
+allow_split_before_default_or_named_assigns = false
+arithmetic_precedence_indication = true
+column_limit = 119
+indent_dictionary_value = true
+join_multiple_lines = true
+no_spaces_around_selected_binary_operators = true
+space_between_ending_comma_and_closing_bracket = true
+split_all_comma_separated_values = true
+split_all_top_level_comma_separated_values = true
+split_before_closing_bracket = true
+split_before_dict_set_generator = true
+split_before_dot = true
+split_before_expression_after_opening_paren = false
+split_before_first_argument = false
+split_complex_comprehension = true
+
+[tool.yapfignore]
+ignore_patterns = [".venv/**/*.py", ".tox/**/*.py", "**/*.pxd", "**/*.pyx"]
+
+# mypy global options:
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+plugins = ["pydantic.mypy"]
+exclude = ['^venv/', '^__init__\.py$']
+
+[[tool.mypy.overrides]]
+module = [
+    "pretty_errors",
+]
+ignore_missing_imports = true
+
+[tool.pycln]
+all = true

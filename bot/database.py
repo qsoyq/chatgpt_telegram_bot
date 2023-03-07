@@ -1,13 +1,15 @@
-from typing import Optional, Any
+import uuid
+
+from datetime import datetime
+from typing import Any, Optional
 
 import pymongo
-import uuid
-from datetime import datetime
 
 import config
 
 
 class Database:
+
     def __init__(self):
         self.client = pymongo.MongoClient(config.mongodb_uri)
         self.db = self.client["chatgpt_telegram_bot"]
@@ -23,7 +25,7 @@ class Database:
                 raise ValueError(f"User {user_id} does not exist")
             else:
                 return False
-        
+
     def add_new_user(
         self,
         user_id: int,
@@ -35,17 +37,13 @@ class Database:
         user_dict = {
             "_id": user_id,
             "chat_id": chat_id,
-
             "username": username,
             "first_name": first_name,
             "last_name": last_name,
-
             "last_interaction": datetime.now(),
             "first_seen": datetime.now(),
-            
             "current_dialog_id": None,
             "current_chat_mode": "assistant",
-
             "n_used_tokens": 0
         }
 
@@ -59,7 +57,8 @@ class Database:
         dialog_dict = {
             "_id": dialog_id,
             "user_id": user_id,
-            "chat_mode": self.get_user_attribute(user_id, "current_chat_mode"),
+            "chat_mode": self.get_user_attribute(user_id,
+                                                 "current_chat_mode"),
             "start_time": datetime.now(),
             "messages": []
         }
@@ -68,10 +67,7 @@ class Database:
         self.dialog_collection.insert_one(dialog_dict)
 
         # update user's current dialog
-        self.user_collection.update_one(
-            {"_id": user_id},
-            {"$set": {"current_dialog_id": dialog_id}}
-        )
+        self.user_collection.update_one({"_id": user_id}, {"$set": {"current_dialog_id": dialog_id}})
 
         return dialog_id
 
@@ -94,7 +90,7 @@ class Database:
         if dialog_id is None:
             dialog_id = self.get_user_attribute(user_id, "current_dialog_id")
 
-        dialog_dict = self.dialog_collection.find_one({"_id": dialog_id, "user_id": user_id})               
+        dialog_dict = self.dialog_collection.find_one({"_id": dialog_id, "user_id": user_id})
         return dialog_dict["messages"]
 
     def set_dialog_messages(self, user_id: int, dialog_messages: list, dialog_id: Optional[str] = None):
@@ -102,8 +98,11 @@ class Database:
 
         if dialog_id is None:
             dialog_id = self.get_user_attribute(user_id, "current_dialog_id")
-        
-        self.dialog_collection.update_one(
-            {"_id": dialog_id, "user_id": user_id},
-            {"$set": {"messages": dialog_messages}}
-        )
+
+        self.dialog_collection.update_one({
+            "_id": dialog_id,
+            "user_id": user_id
+        },
+                                          {"$set": {
+                                              "messages": dialog_messages
+                                          }})

@@ -1,5 +1,5 @@
 # ❤️ Donate
-This project is done on **pure enthusiasm** – true Open Source. Your donations **really motivate** me to support the project and **add new features**. If you've donated, text me on [Telegram](https://t.me/karfly) – I want to thank you personally! 
+This project is done on **pure enthusiasm** – true Open Source. Your donations **really motivate** me to support the project and **add new features**. If you've donated, text me on [Telegram](https://t.me/karfly) – I want to thank you personally!
 
 *At the moment only crypto donations are available. Soon I will add PayPal option*
 
@@ -80,4 +80,3 @@ Address: `TPUT2uL5fannBLcEq64pfvHftZB2a17Nze`
 Scan it with your crypto wallet:
 
 ![USDC (TRC-20) QR code](qrcodes/usdc_trc_20.png)
-

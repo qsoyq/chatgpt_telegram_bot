@@ -1,20 +1,25 @@
-FROM python:3.8-slim
+FROM python:3.10 as builder
 
-ENV PYTHONFAULTHANDLER=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONHASHSEED=random
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PIP_NO_CACHE_DIR=off
-ENV PIP_DISABLE_PIP_VERSION_CHECK=on
-ENV PIP_DEFAULT_TIMEOUT=100
+COPY . .
 
-RUN apt-get update
-RUN apt-get install -y python3 python3-pip python-dev build-essential python3-venv
+RUN pip install poetry
 
-RUN mkdir -p /code
-ADD . /code
-WORKDIR /code
+RUN poetry config virtualenvs.create false
 
-RUN pip3 install -r requirements.txt
+RUN poetry build 
 
-CMD ["bash"]
+FROM python:3.10-alpine as prod
+
+RUN mkdir -p /logs
+
+COPY --from=0 /dist /dist
+
+COPY --from=0 /config /config
+
+RUN pip install /dist/*.whl
+
+RUN rm -rf /dist
+
+RUN python -m pretty_errors -s
+
+CMD main
