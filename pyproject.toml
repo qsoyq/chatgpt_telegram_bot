@@ -41,7 +41,7 @@ pytest ="^7.1.3"
 pytest-asyncio = "^0.19.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.tox]
@@ -65,39 +65,45 @@ commands =
 [tool.isort]
 # https://pycqa.github.io/isort/docs/configuration/options.html
 # profile = "hug"
-line_length = 119
+# line_length = 160
 multi_line_output = 3
 balanced_wrapping = true
 use_parentheses = true
 atomic = true
 lines_between_types = 1
 combine_as_imports = true
+include_trailing_comma = true
 
 [tool.yapf]
 # https://github.com/google/yapf#formatting-style
 based_on_style = "google"
 # https://github.com/google/yapf#knobs
-spaces_before_comment = 2
-split_before_logical_operator = true
-ALIGN_CLOSING_BRACKET_WITH_VISUAL_INDENT = true
-allow_multiline_dictionary_keys = true
-coalesce_brackets = true
-dedent_closing_brackets = true
-allow_split_before_default_or_named_assigns = false
-arithmetic_precedence_indication = true
-column_limit = 119
-indent_dictionary_value = true
-join_multiple_lines = true
-no_spaces_around_selected_binary_operators = true
-space_between_ending_comma_and_closing_bracket = true
-split_all_comma_separated_values = true
-split_all_top_level_comma_separated_values = true
-split_before_closing_bracket = true
-split_before_dict_set_generator = true
-split_before_dot = true
-split_before_expression_after_opening_paren = false
-split_before_first_argument = false
-split_complex_comprehension = true
+spaces_before_comment = [15, 20] # 尾注释对齐
+split_before_logical_operator = true # 优化布尔表达式的短路求值特性
+ALIGN_CLOSING_BRACKET_WITH_VISUAL_INDENT = true # 右括号缩进对其
+allow_multiline_dictionary_keys = false # 是否允许字典中 key 跨行
+coalesce_brackets = true # 不拆分连续的括号
+DEDENT_CLOSING_BRACKETS = true # 当括号中的参数需要换行时, 右括号单独一行
+INDENT_CLOSING_BRACKETS = false # 当括号中的参数需要换行时, 右括号单独一行且是否需要和左括号对其
+allow_split_before_default_or_named_assigns = true # 允许在默认值或命名参数赋值语句之前拆分参数
+arithmetic_precedence_indication = true # 通过行间距表示运算符之间的优先级
+BLANK_LINE_BEFORE_NESTED_CLASS_OR_DEF = true # 在嵌套的函数或类声明之前插入一个空行
+column_limit = 160 # 列数限制
+indent_dictionary_value = false # 如果字典键和值不能处于一列则缩进值
+join_multiple_lines = true # 将短行合并为一行
+no_spaces_around_selected_binary_operators = true # 对指定的二元运算符周围不添加空格
+space_between_ending_comma_and_closing_bracket = true # 在列表的结尾逗号和右空格之间加一个空格
+split_all_comma_separated_values = true # 对部分无法单行的逗号分隔的列表拆分使每个元素单独一行, 对长行定义不清晰, 关闭, 重点注意
+SPLIT_ALL_TOP_LEVEL_COMMA_SEPARATED_VALUES = true # split_all_comma_separated_values的变体, 避免子表达式被拆分跨行
+SPLIT_BEFORE_CLOSING_BRACKET = true # 对不适合单行的列表或字典在右括号前拆分
+SPLIT_BEFORE_DICT_SET_GENERATOR = false # 在生成器 for 关键字前的部分进行拆分
+split_before_dot = true # 对于需要拆分的长表达式, 在.表达式拆分
+split_before_expression_after_opening_paren = false # 如果表达式不适合单行，则在围绕表达式的左括号之后拆分
+split_before_first_argument = true # 要拆分参数列表时在第一个参数处拆分
+split_complex_comprehension = true # 对于具有多个子句（例如多个 for 调用、if 过滤器表达式）并且需要重排的列表理解和生成器表达式，将每个子句拆分到自己的行
+
+
+
 
 [tool.yapfignore]
 ignore_patterns = [".venv/**/*.py", ".tox/**/*.py", "**/*.pxd", "**/*.pyx"]

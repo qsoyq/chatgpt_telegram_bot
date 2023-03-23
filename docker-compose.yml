@@ -9,19 +9,19 @@ services:
       - ${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}
     volumes:
       - ${MONGODB_PATH:-./mongodb}:/data/db
-    # TODO: add auth
 
   chatgpt_telegram_bot:
     container_name: chatgpt_telegram_bot
-    restart: always
+    restart: unless-stopped
     build:
       context: "."
       dockerfile: Dockerfile
-
     environment:
-      - config_dir=/config
+      - telegram_token=${telegram_token}
+      - openai_api_key=${openai_api_key}
     depends_on:
       - mongo
+    mem_limit: 128M
 
   mongo_express:
     container_name: mongo-express

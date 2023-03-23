@@ -10,16 +10,22 @@ RUN poetry build
 
 FROM python:3.10-alpine as prod
 
+ENV TZ=Asia/Shanghai
+
+ENV LOG_LEVEL=20
+
+ENV DEBUG=f
+
 RUN mkdir -p /logs
 
 COPY --from=0 /dist /dist
-
-COPY --from=0 /config /config
 
 RUN pip install /dist/*.whl
 
 RUN rm -rf /dist
 
 RUN python -m pretty_errors -s
+
+EXPOSE 8000
 
 CMD main

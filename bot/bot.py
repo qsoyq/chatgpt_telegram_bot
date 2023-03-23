@@ -6,6 +6,7 @@ import traceback
 from datetime import datetime
 
 import chatgpt
+import config
 import database
 import telegram
 
@@ -17,10 +18,8 @@ from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
-    filters
+    filters,
 )
-
-import config
 
 # setup
 db = database.Database()
@@ -28,23 +27,25 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 HELP_MESSAGE = """Commands:
-⚪ /retry – Regenerate last bot answer
-⚪ /new – Start new dialog
-⚪ /mode – Select chat mode
-⚪ /balance – Show balance
-⚪ /help – Show help
+⚪ /retry - Regenerate last bot answer
+⚪ /new - Start new dialog
+⚪ /mode - Select chat mode
+⚪ /balance - Show balance
+⚪ /help - Show help
+"""
+
+TELEGRAM_COMMANDS_MENUS = """
+retry - Regenerate last bot answer
+new - Start new dialog
+mode - Select chat mode
+balance - Show balance
+help - Show help
 """
 
 
 async def register_user_if_not_exists(update: Update, context: CallbackContext, user: User):
     if not db.check_if_user_exists(user.id):
-        db.add_new_user(
-            user.id,
-            update.message.chat_id,
-            username=user.username,
-            first_name=user.first_name,
-            last_name=user.last_name
-        )
+        db.add_new_user(user.id, update.message.chat_id, username=user.username, first_name=user.first_name, last_name=user.last_name)
         db.start_new_dialog(user.id)
 
     if db.get_user_attribute(user.id, "current_dialog_id") is None:
@@ -84,7 +85,7 @@ async def retry_handle(update: Update, context: CallbackContext):
         return
 
     last_dialog_message = dialog_messages.pop()
-    db.set_dialog_messages(user_id, dialog_messages, dialog_id=None)  # last message was removed from the context
+    db.set_dialog_messages(user_id, dialog_messages, dialog_id=None) # last message was removed from the context
 
     await message_handle(update, context, message=last_dialog_message["user"], use_new_dialog_timeout=False)
 
@@ -101,8 +102,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
     # new dialog timeout
     if use_new_dialog_timeout:
         if (datetime.now() - db.get_user_attribute(user_id,
-                                                   "last_interaction")
-            ).seconds > config.new_dialog_timeout and len(db.get_dialog_messages(user_id)) > 0:
+                                                   "last_interaction")).seconds > config.new_dialog_timeout and len(db.get_dialog_messages(user_id)) > 0:
             db.start_new_dialog(user_id)
             await update.message.reply_text("Starting new dialog due to timeout ✅")
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
@@ -122,19 +122,9 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
 
         # update user data
         new_dialog_message = {"user": message, "bot": answer, "date": datetime.now()}
-        db.set_dialog_messages(
-            user_id,
-            db.get_dialog_messages(user_id,
-                                   dialog_id=None) + [new_dialog_message],
-            dialog_id=None
-        )
+        db.set_dialog_messages(user_id, db.get_dialog_messages(user_id, dialog_id=None) + [new_dialog_message], dialog_id=None)
 
-        db.set_user_attribute(
-            user_id,
-            "n_used_tokens",
-            n_used_tokens + db.get_user_attribute(user_id,
-                                                  "n_used_tokens")
-        )
+        db.set_user_attribute(user_id, "n_used_tokens", n_used_tokens + db.get_user_attribute(user_id, "n_used_tokens"))
 
     except Exception as e:
         error_text = f"Something went wrong during completion. Reason: {e}"
@@ -194,10 +184,7 @@ async def set_chat_mode_handle(update: Update, context: CallbackContext):
     db.set_user_attribute(user_id, "current_chat_mode", chat_mode)
     db.start_new_dialog(user_id)
 
-    await query.edit_message_text(
-        f"<b>{chatgpt.CHAT_MODES[chat_mode]['name']}</b> chat mode is set",
-        parse_mode=ParseMode.HTML
-    )
+    await query.edit_message_text(f"<b>{chatgpt.CHAT_MODES[chat_mode]['name']}</b> chat mode is set", parse_mode=ParseMode.HTML)
 
     await query.edit_message_text(f"{chatgpt.CHAT_MODES[chat_mode]['welcome_message']}", parse_mode=ParseMode.HTML)
 
@@ -249,6 +236,8 @@ async def error_handle(update: Update, context: CallbackContext) -> None:
 
 
 def run_bot() -> None:
+    # todo: config log level
+    logging.basicConfig(level=logging.DEBUG)
     application = (ApplicationBuilder().token(config.telegram_token).build())
 
     # add handlers
@@ -272,6 +261,7 @@ def run_bot() -> None:
     application.add_error_handler(error_handle)
 
     # start the bot
+    logger.info("start the bot")
     application.run_polling()
 
 

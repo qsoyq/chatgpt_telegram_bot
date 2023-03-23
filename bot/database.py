@@ -3,9 +3,8 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-import pymongo
-
 import config
+import pymongo
 
 
 class Database:
@@ -99,10 +98,4 @@ class Database:
         if dialog_id is None:
             dialog_id = self.get_user_attribute(user_id, "current_dialog_id")
 
-        self.dialog_collection.update_one({
-            "_id": dialog_id,
-            "user_id": user_id
-        },
-                                          {"$set": {
-                                              "messages": dialog_messages
-                                          }})
+        self.dialog_collection.update_one({"_id": dialog_id, "user_id": user_id}, {"$set": {"messages": dialog_messages}})
