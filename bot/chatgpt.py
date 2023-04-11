@@ -46,7 +46,7 @@ class ChatGPT:
     def __init__(self, use_chatgpt_api=True):
         self.use_chatgpt_api = use_chatgpt_api
 
-    def send_message(self, message, dialog_messages=[], chat_mode="assistant", model: str = "gpt-3.5-turbo", api_key: str = None):
+    def send_message(self, message, dialog_messages=[], chat_mode="assistant", model: str = "gpt-3.5-turbo", api_key: str | None = None):
         if chat_mode not in CHAT_MODES.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
         if api_key is None:

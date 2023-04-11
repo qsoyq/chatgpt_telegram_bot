@@ -10,9 +10,17 @@ import config
 import database
 import telegram
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User
+from settings import settings
+from telegram import (
+    BotCommand,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update,
+    User,
+)
 from telegram.constants import ParseMode
 from telegram.ext import (
+    Application,
     ApplicationBuilder,
     CallbackContext,
     CallbackQueryHandler,
@@ -31,6 +39,8 @@ HELP_MESSAGE = """Commands:
 ⚪ /new - Start new dialog
 ⚪ /mode - Select chat mode
 ⚪ /balance - Show balance
+⚪ /my_api_key - Show user's oepnai api key
+⚪ /set_api_key - Set user new openai api key
 ⚪ /help - Show help
 """
 
@@ -39,6 +49,8 @@ retry - Regenerate last bot answer
 new - Start new dialog
 mode - Select chat mode
 balance - Show balance
+my_api_key - Show user's oepnai api key
+set_api_key - Set user new openai api key
 help - Show help
 """
 
@@ -95,9 +107,15 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
     if update.edited_message is not None:
         await edited_message_handle(update, context)
         return
-
+    assert update.message
+    assert update.message.from_user
     await register_user_if_not_exists(update, context, update.message.from_user)
     user_id = update.message.from_user.id
+    openai_api_key: str | None = None
+    try:
+        openai_api_key = db.get_user_attribute(user_id, 'openai_api_key')
+    except ValueError:
+        pass
 
     # new dialog timeout
     if use_new_dialog_timeout:
@@ -118,6 +136,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             message,
             dialog_messages=db.get_dialog_messages(user_id, dialog_id=None),
             chat_mode=db.get_user_attribute(user_id, "current_chat_mode"),
+            api_key = openai_api_key
         )
 
         # update user data
@@ -211,6 +230,36 @@ async def edited_message_handle(update: Update, context: CallbackContext):
     await update.edited_message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
+async def show_user_openai_api_key(update: Update, context: CallbackContext):
+    assert update.message
+    assert update.message.from_user
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    user_id = update.message.from_user.id
+    try:
+        openai_api_key = db.get_user_attribute(user_id, 'openai_api_key')
+        await update.message.reply_text(f"your openai api key: {openai_api_key}", parse_mode=ParseMode.HTML)
+    except ValueError:
+        await update.message.reply_text("api key not found.", parse_mode=ParseMode.HTML)
+
+
+async def set_user_openai_api_key(update: Update, context: CallbackContext):
+    assert update.message
+    assert update.message.from_user
+
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    user_id = update.message.from_user.id
+
+    if context.args:
+        if len(context.args) > 1:
+            await update.message.reply_text("too many arguments.", parse_mode=ParseMode.HTML)
+        elif len(context.args) == 1:
+            openai_api_key = context.args[0]
+            db.set_user_attribute(user_id, 'openai_api_key', openai_api_key)
+            await update.message.reply_text("set new openai api key success.", parse_mode=ParseMode.HTML)
+        else:
+            await update.message.reply_text("need openai api key.", parse_mode=ParseMode.HTML)
+
+
 async def error_handle(update: Update, context: CallbackContext) -> None:
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
@@ -235,10 +284,29 @@ async def error_handle(update: Update, context: CallbackContext) -> None:
         await context.bot.send_message(update.effective_chat.id, "Some error in error handler")
 
 
+async def post_init(application: Application):
+    await application.bot.set_my_commands([
+        BotCommand("/new",
+                   "Start new dialog"),
+        BotCommand("/mode",
+                   "Select chat mode"),
+        BotCommand("/retry",
+                   "Re-generate response for previous query"),
+        BotCommand("/balance",
+                   "Show balance"),
+        BotCommand("/set_api_key",
+                   "Set your openai api key"),
+        BotCommand("/my_api_key",
+                   "Show your oepnai api key"),
+        BotCommand("/help",
+                   "Show help message"),
+    ])
+
+
 def run_bot() -> None:
     # todo: config log level
-    logging.basicConfig(level=logging.DEBUG)
-    application = (ApplicationBuilder().token(config.telegram_token).build())
+    logging.basicConfig(level=settings.log_level)
+    application = (ApplicationBuilder().token(config.telegram_token).post_init(post_init).build())
 
     # add handlers
     if len(config.allowed_telegram_usernames) == 0:
@@ -257,6 +325,8 @@ def run_bot() -> None:
     application.add_handler(CallbackQueryHandler(set_chat_mode_handle, pattern="^set_chat_mode"))
 
     application.add_handler(CommandHandler("balance", show_balance_handle, filters=user_filter))
+    application.add_handler(CommandHandler("my_api_key", show_user_openai_api_key, filters=user_filter))
+    application.add_handler(CommandHandler("set_api_key", set_user_openai_api_key, filters=user_filter))
 
     application.add_error_handler(error_handle)
 

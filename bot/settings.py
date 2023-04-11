@@ -5,6 +5,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
 
+    log_level: int = 10
     telegram_token: str
     openai_api_key: str
     use_chatgpt_api: bool = True

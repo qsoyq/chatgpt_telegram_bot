@@ -1,4 +1,4 @@
-from bot.settings import settings
+from settings import settings
 
 # config parameters
 telegram_token = settings.telegram_token
