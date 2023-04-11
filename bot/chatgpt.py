@@ -46,21 +46,22 @@ class ChatGPT:
     def __init__(self, use_chatgpt_api=True):
         self.use_chatgpt_api = use_chatgpt_api
 
-    def send_message(self, message, dialog_messages=[], chat_mode="assistant", model: str = "gpt-3.5-turbo"):
+    def send_message(self, message, dialog_messages=[], chat_mode="assistant", model: str = "gpt-3.5-turbo", api_key: str = None):
         if chat_mode not in CHAT_MODES.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
-
+        if api_key is None:
+            api_key = config.openai_api_key
         n_dialog_messages_before = len(dialog_messages)
         answer = None
         while answer is None:
             try:
                 if self.use_chatgpt_api:
                     messages = self._generate_prompt_messages_for_chatgpt_api(message, dialog_messages, chat_mode)
-                    r = openai.ChatCompletion.create(model=model, messages=messages, **OPENAI_COMPLETION_OPTIONS)
+                    r = openai.ChatCompletion.create(model=model, messages=messages, api_key=api_key, **OPENAI_COMPLETION_OPTIONS)
                     answer = r.choices[0].message["content"]
                 else:
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
-                    r = openai.Completion.create(engine="text-davinci-003", prompt=prompt, **OPENAI_COMPLETION_OPTIONS)
+                    r = openai.Completion.create(engine="text-davinci-003", prompt=prompt, api_key=api_key, **OPENAI_COMPLETION_OPTIONS)
                     answer = r.choices[0].text
 
                 answer = self._postprocess_answer(answer)
